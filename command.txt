@@ -1,0 +1,12 @@
+pip uninstall -y torch torchaudio torchvision torchdata k2
+
+pip install torch==2.1.0 torchvision==0.16.0 torchaudio==2.1.0 torchdata==0.7.1 --index-url https://download.pytorch.org/whl/cu121
+
+pip install k2==1.24.3+cu121.torch2.1.0 --extra-index-url https://k2-fsa.github.io/k2/
+
+python -c "import torch, torchaudio; print(torch.__version__, torchaudio.__version__)"
+
+pip install --force-reinstall "wandb>=0.15.11,<0.16"
+
+python -c "import wandb; print(wandb.__version__)"
+
