@@ -18,8 +18,8 @@ riva_tegra_platform="orin"
 
 # For any language other than en-US: service_enabled_nlp must be set to false
 service_enabled_asr=true
-service_enabled_nlp=true
-service_enabled_tts=true
+service_enabled_nlp=false
+service_enabled_tts=false
 service_enabled_nmt=false
 
 
@@ -57,7 +57,7 @@ asr_acoustic_model=("conformer")
 
 # Specify ASR language to deploy, as defined in "asr_models_languages_map" above
 # For multiple languages, enter space separated language codes
-asr_language_code=("en-US")
+asr_language_code=("vi-VN")
 
 # Specify ASR accessory model from below list, prebuilt model available only when "asr_acoustic_model" is set to "parakeet_1.1b"
 # "diarizer" : deploy ASR model with Speaker Diarization model
@@ -156,7 +156,7 @@ MODEL_DEPLOY_KEY="tlt_encode"
 # optimized versions.
 
 # riva_model_loc="riva-model-repo"
-riva_model_loc="D:\Project\Riva_ASR\riva_quickstart_2.19.0\model"
+riva_model_loc="/data/models"
 
 
 if [[ $riva_target_gpu_family == "tegra" ]]; then
@@ -168,7 +168,7 @@ fi
 # then set the below $use_existing_rmirs flag to true. You can also deploy your set of custom
 # RMIRs by keeping them in the riva_rmir_loc dir and use this quickstart script with the
 # below flag to deploy them all together.
-use_existing_rmirs=false
+use_existing_rmirs=true
 
 # Ports to expose for Riva services
 riva_speech_api_port="50051"

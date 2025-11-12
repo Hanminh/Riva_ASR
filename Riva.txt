@@ -1,0 +1,84 @@
+covert .nemo to .riva
+
+docker run -d -it --name export_riva --runtime=nvidia -e NVIDIA_VISIBLE_DEVICES=all --shm-size=128gb -v /u01/os_ocr/datnt124/RIVA/cus-deploy:/data/  nvcr.io/nvidia/nemo:23.06
+docker run -d -it --name export_riva_soft --runtime=nvidia -e NVIDIA_VISIBLE_DEVICES=all --shm-size=128gb -v /u01/os_ocr/datnt124/RIVA/cus-deploy:/data/  nvcr.io/nvidia/nemo:25.07
+
+
+
+pip install onnx==1.12.0 onnxruntime==1.12.1
+pip install nemo2riva==2.19.0
+pip install colored
+pip install --no-cache-dir "protobuf<5,>=3.20" "wandb>=0.16,<0.17"
+pip install "lightning>=2.0,<3.0"
+nemo2riva --out FastConformer-CTC-BPE.riva --onnx-opset 18 --key=nemotoriva FastConformer-CTC-BPE.nemo
+
+
+
+
+
+
+
+Truy cập vào https://docs.nvidia.com/deeplearning/riva/user-guide/docs/asr/asr-pipeline-configuration.html
+
+docker run -d -it --gpus all --name servicemaker -v D:\Project\Riva_ASR\data:/data/ -e NVIDIA_VISIBLE_DEVICES=all --shm-size=128gb nvcr.io/nvidia/riva/riva-speech:2.19.0
+docker exec -it servicemaker bash
+cd /data/
+
+Tạo file rmir
+riva-build speech_recognition \
+FastConformer-CTC-BPE.rmir FastConformer-CTC-BPE.riva \
+ --name=parakeet-0.6b-vi-VN-asr-streaming \
+ --return_separate_utterances=False \
+ --featurizer.use_utterance_norm_params=False \
+ --featurizer.precalc_norm_time_steps=0 \
+ --featurizer.precalc_norm_params=False \
+ --ms_per_timestep=80 \
+ --endpointing.residue_blanks_at_start=-16   \
+ --nn.fp16_needs_obey_precision_pass \
+ --unified_acoustic_model \
+ --chunk_size=0.16   --left_padding_size=1.92   \
+ --right_padding_size=1.92   --decoder_type=greedy   \
+ --greedy_decoder.asr_model_delay=-1   --language_code=vi-VN
+
+
+riva-build speech_recognition \
+  FastConformer-CTC-BPE_Diarizer_streaming.rmir Parakeet_CTC.riva  \
+  sortformer_diarizer.riva \
+  --name=parakeet-0.6b-vi-VN-asr-streaming \
+  --return_separate_utterances=False \
+  --featurizer.use_utterance_norm_params=False \
+  --featurizer.precalc_norm_time_steps=0 \
+  --featurizer.precalc_norm_params=False \
+  --ms_per_timestep=80 \
+  --endpointing_type=greedy_ctc \
+  --endpointing.residue_blanks_at_start=-16 \
+  --nn.fp16_needs_obey_precision_pass \
+  --unified_acoustic_model \
+  --chunk_size=0.16 \
+  --left_padding_size=1.92 \
+  --right_padding_size=1.92 \
+  --decoder_type=greedy \
+  --greedy_decoder.asr_model_delay=-1 \
+  --language_code=vi-VN \
+  --vad_type=none \
+  --diarizer_type=sortformer
+
+
+Nếu thêm tách giọng streaming.
+riva-build speech_recognition   \
+FastConformer-CTC-BPE.rmir FastConformer-CTC-BPE.riva   \
+--name=parakeet-0.6b-vi-VN-asr-streaming   \
+--return_separate_utterances=False   \
+--featurizer.use_utterance_norm_params=False   \
+--featurizer.precalc_norm_time_steps=0   \
+--featurizer.precalc_norm_params=False   \
+--ms_per_timestep=40   --endpointing.residue_blanks_at_start=-16   \
+--nn.fp16_needs_obey_precision_pass   --unified_acoustic_model   \
+--chunk_size=0.16 --left_padding_size=1.92 --right_padding_size=1.92   \
+--decoder_type=greedy --greedy_decoder.asr_model_delay=-1   --language_code=vi-V
+
+/data/stt_en_fastconformer_ctc_large_v1.0.0/FastConformer-CTC-BPE_Diarizer_streaming.rmir 
+
+docker run -it --gpus all -v D:\Project\Riva_ASR\data:/data/ -p 50051:50052 -p 8000:8000 nvcr.io/nvidia/riva/riva-speech:2.14.0-server riva-speech-server --model-repo=/data/models
+
+docker run -d --gpus all --init --shm-size=1G --ulimit memlock=-1 --ulimit stack=67108864 -v D:\Project\Riva_ASR\data:/data -p 50051:50051 -e "CUDA_VISIBLE_DEVICES=0" --name riva-speech nvcr.io/nvidia/riva/riva-speech:2.19.0 start-riva  --riva-uri=0.0.0.0:50051 --nlp_service=true --asr_service=true --tts_service=true
